@@ -15,6 +15,8 @@ from gtwittools.tweetin import (
 
 matplotlib.use('Agg')
 
+DEBUG = bool(os.environ.get('LPS_DEBUG', None))
+
 # sampler process
 
 TWEET_INTERVAL = int(os.environ.get('TWEET_INTERVAL', 0)) or 60.0 * 15
@@ -113,16 +115,21 @@ def configure_plots(buffer_reader, plot_q):
 
 def tweet_rendered(twitter_api, rendered_q):
     for item in rendered_q:
-        #print(unicode(item))
-        twitter_api.PostMedia(
-            item['caption'], item['filename'])
-        os.unlink(item['filename'])
+        if twitter_api and not DEBUG:
+            twitter_api.PostMedia(
+                item['caption'], item['filename'])
+            os.unlink(item['filename'])
+        else:
+            print(unicode(item))
 
 
 def renderer_process(buffer_reader, output_dir='/tmp/'):
     plot_q = Queue()
     rendered_q = Queue()
-    twitter_api = get_twitter_api()
+    try:
+        twitter_api = get_twitter_api()
+    except KeyError:
+        twitter_api = None
     confs = [
         [configure_plots, buffer_reader, plot_q],
         [plotter, plot_q, rendered_q, output_dir],
