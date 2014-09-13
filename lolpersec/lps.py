@@ -170,6 +170,7 @@ def configure_plots(buffer_reader, plot_q):
         values, top_tweet_url = buffer_reader.get()
         caption = time.strftime('%I:%M %p %Z on %a, %x')
         if len(values):
+            max_val = max(values)
             avg = sum(values) / len(values)
             stat_info = 'Average {0:.2f} LOL/s'.format(avg)
             caption = '{} at {}'.format(stat_info, caption)
@@ -178,7 +179,8 @@ def configure_plots(buffer_reader, plot_q):
         conf = dict(
             values=values,
             caption=caption,
-            xticks=[]
+            xticks=[],
+            ylim=[0, max_val * 1.1]
         )
         plot_q.put(conf)
 
