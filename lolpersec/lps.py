@@ -5,13 +5,15 @@ import time
 
 import gevent
 import gipc
-import matplotlib.pyplot as plt
+import matplotlib
 from gevent.queue import Queue
 from gtwittools.gutils import (
     echo_queue, never_surrender, sampler, spawn_greenlets, spawn_processes)
 from gtwittools.tweetin import (
     extract_statuses, filter_twitter, get_twitter_api)
 
+
+matplotlib.use('Agg')
 
 # sampler process
 
@@ -82,9 +84,9 @@ def plotter(conf_q, rendered_q, output_dir='/tmp/'):
 
 
 def render_plot(plot_conf, filename='/tmp/test.png'):
+    import matplotlib.pyplot as plt
     # TODO: learn matlabplot
     plt.clf()
-    plt.style.use('fivethirtyeight')
     values = plot_conf.pop('values')
     plt.fill_between(xrange(len(values)), values)
     for key, value in plot_conf.items():
