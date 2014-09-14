@@ -117,7 +117,8 @@ def periodic_top_tweets(twitter_api, interval=TWEET_INTERVAL * 0.3, unique_inter
             used_tweets.append(set())    
         all_used_tweets = reduce(operator.or_, used_tweets)
         unique_counter = top_tweet.windowed_counts
-        unique_counter.subtract(all_used_tweets)
+        for url in all_used_tweets:
+            unique_counter[url] = 0
         most_common = unique_counter.most_common(5)
         most_common_urls = [url for url, _ in most_common]
         if not most_common_urls:
