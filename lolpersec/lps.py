@@ -179,7 +179,7 @@ def configure_plots(buffer_reader, plot_q):
             caption = '{} at {}'.format(stat_info, timestamp)
         if top_tweet_urls:
             caption += ' Top tweets: {}'.format(
-                ', '.join(top_tweet_urls)
+                ' '.join(top_tweet_urls)
             )
         conf = dict(
             values=values,
