@@ -1,5 +1,6 @@
 from gevent.monkey import patch_all; patch_all()
 
+import operator
 import os
 import time
 from collections import Counter
@@ -13,7 +14,7 @@ from gtwittools.gutils import (
     spawn_greenlets, spawn_processes
 )
 from gtwittools.tweetin import (
-    extract_statuses, filter_twitter, get_twitter_api
+    extract_statuses, filter_twitter, get_twitter_api, post_to_twitter
 )
 
 
@@ -71,8 +72,11 @@ class TopTweet(object):
         counts.update(self.last_counter)
         return counts
 
-    def update(self, url, delta=1):
+    def incr(self, url, delta=1):
         self.this_counter[url] += delta
+
+    def update(self, other):
+        self.this_counter.update(other)
 
     def advance_window(self):
         self.last_counter = self.this_counter
@@ -94,9 +98,38 @@ def count_top_tweet(status_q):
         url = "https://twitter.com/{}/status/{}".format(
             user_name, replied_id
         )
-        top_tweet.update(url, item['text'].count('lol'))
+        top_tweet.incr(url, item['text'].count('lol'))
         if DEBUG:
             print url
+
+
+def periodic_top_tweets(twitter_api, interval=TWEET_INTERVAL * 0.3, unique_interval=10):
+    """Tweet top unique lol'd tweets once in a while."""
+    global top_tweet
+    used_tweets = [set() for i in xrange(9)]
+    num_runs = 0
+    while True:
+        gevent.sleep(interval)
+        num_runs += 1
+        # expire unique
+        if not num_runs % unique_interval:
+            used_tweets.pop(0)
+            used_tweets.append(set())    
+        all_used_tweets = reduce(operator.or_, used_tweets)
+        unique_counter = top_tweet.windowed_counts
+        unique_counter.subtract(all_used_tweets)
+        most_common = unique_counter.most_common(5)
+        most_common_urls = [url for url, _ in most_common]
+        if not most_common_urls:
+            continue
+        used_tweets[-1] |= set(most_common_urls)
+        status = 'Top lol\'d tweets: {}'.format(
+            ' '.join(most_common_urls)
+        )
+        if DEBUG:
+            print(status)
+        else:
+            twitter_api.PostStatus(status)
 
 
 def aggregate_sampler_data(output_writer, buffer_q):
@@ -122,7 +155,8 @@ def sampler_process(output_writer, fn, phrase='lol'):
         [extract_statuses, phrase_status_q, raw_status_q],
         [count_phrases, raw_status_q, phrase],
         # top tweet
-        [count_top_tweet, top_tweet_status_q]
+        [count_top_tweet, top_tweet_status_q],
+        [periodic_top_tweets, twitter_api, TWEET_INTERVAL * 0.25, 10]
     ]
     if not DEBUG:
         for conf in confs:
