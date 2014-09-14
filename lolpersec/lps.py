@@ -23,7 +23,8 @@ DEBUG = bool(os.environ.get('LPS_DEBUG', None))
 
 # sampler process
 
-TWEET_INTERVAL = int(os.environ.get('TWEET_INTERVAL', 0)) or 60.0 * 15
+TWEET_INTERVAL_MINS = float(os.environ.get('TWEET_INTERVAL', 0)) or 15.0
+TWEET_INTERVAL = 60.0 * TWEET_INTERVAL_MINS
 TWEET_SAMPLE_WINDOW = int(os.environ.get('TWEET_SAMPLE_WINDOW', 0)) or 5.0  # seconds
 
 counter = 0
@@ -169,12 +170,13 @@ def configure_plots(buffer_reader, plot_q):
     """Transform the sample buffer into some plotting commands."""
     while True:
         values, top_tweet_urls = buffer_reader.get()
-        caption = time.strftime('%I:%M %p %Z on %a, %x')
+        timestamp = time.strftime('%I:%M %p %Z on %a, %x')
+        caption = timestamp
         if len(values):
             max_val = max(values)
             avg = sum(values) / len(values)
             stat_info = 'Average {0:.2f} LOL/s'.format(avg)
-            caption = '{} at {}'.format(stat_info, caption)
+            caption = '{} at {}'.format(stat_info, timestamp)
         if top_tweet_urls:
             caption += ' Top tweets: {}'.format(
                 ', '.join(top_tweet_urls)
@@ -183,7 +185,10 @@ def configure_plots(buffer_reader, plot_q):
             values=values,
             caption=caption,
             xticks=[],
-            ylim=[0, max_val * 1.1]
+            ylim=[0, max_val * 1.1],
+            ylabel='LOL per second',
+            title='VeLOLcity @lolpersec',
+            xlabel='{0:g} minutes at {1} '.format(TWEET_INTERVAL_MINS, timestamp)
         )
         plot_q.put(conf)
 
