@@ -186,8 +186,8 @@ def configure_plots(buffer_reader, plot_q):
             caption=caption,
             xticks=[],
             ylim=[0, max_val * 1.1],
-            ylabel='LOL per second',
-            title='VeLOLcity @lolpersec',
+            ylabel='lol per second',
+            title='How often is "lol" tweeted? @LolPerSec',
             xlabel='{0:g} minutes at {1} '.format(TWEET_INTERVAL_MINS, timestamp)
         )
         plot_q.put(conf)
