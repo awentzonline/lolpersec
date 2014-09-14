@@ -71,8 +71,8 @@ class TopTweet(object):
         counts.update(self.last_counter)
         return counts
 
-    def update(self, url):
-        self.this_counter[url] += 1
+    def update(self, url, delta=1):
+        self.this_counter[url] += delta
 
     def advance_window(self):
         self.last_counter = self.this_counter
@@ -94,7 +94,7 @@ def count_top_tweet(status_q):
         url = "https://twitter.com/{}/status/{}".format(
             user_name, replied_id
         )
-        top_tweet.update(url)
+        top_tweet.update(url, item['text'].count('lol'))
         if DEBUG:
             print url
 
