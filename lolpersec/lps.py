@@ -129,7 +129,7 @@ def periodic_top_tweets(twitter_api, interval=TWEET_INTERVAL * 0.3, unique_inter
         if DEBUG:
             print(status)
         else:
-            twitter_api.PostStatus(status)
+            twitter_api.PostUpdate(status)
 
 
 def aggregate_sampler_data(output_writer, buffer_q):
