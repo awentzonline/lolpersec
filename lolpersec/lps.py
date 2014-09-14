@@ -102,7 +102,7 @@ def count_top_tweet(status_q):
 def aggregate_sampler_data(output_writer, buffer_q):
     for buffer_item in buffer_q:
         counts = top_tweet.windowed_counts
-        top_tweet_urls = [c[0] for c in counts.most_common(2)]
+        top_tweet_urls = [c[0] for c in counts.most_common(3)]
         top_tweet.advance_window()
         output_writer.put((buffer_item, top_tweet_urls))
 
@@ -170,15 +170,15 @@ def configure_plots(buffer_reader, plot_q):
     """Transform the sample buffer into some plotting commands."""
     while True:
         values, top_tweet_urls = buffer_reader.get()
-        timestamp = time.strftime('%I:%M %p %Z on %a, %x')
+        timestamp = time.strftime('%I:%M %p %Z on %x')
         caption = timestamp
         if len(values):
             max_val = max(values)
             avg = sum(values) / len(values)
-            stat_info = 'Average {0:.2f} LOL/s'.format(avg)
+            stat_info = 'Avg {0:.1f} LOL/s'.format(avg)
             caption = '{} at {}'.format(stat_info, timestamp)
         if top_tweet_urls:
-            caption += ' Top tweets: {}'.format(
+            caption += ' {}'.format(
                 ' '.join(top_tweet_urls)
             )
         conf = dict(
