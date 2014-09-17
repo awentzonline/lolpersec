@@ -53,37 +53,33 @@ def count_phrases(phrase_q, phrase):
         counter += text.count(phrase)
 
 
-class TopTweet(object):
-    def __init__(self):
-        self.this_counter = Counter()
-        self.last_counter = Counter()
+class ChunkedCounter(object):
+    def __init__(self, num_chunks=3):
+        self.counters = [Counter() for _ in range(num_chunks)]
 
     @property
-    def top_tweet_url(self):
-        counts = self.windowed_counts
-        top = counts.most_common(1)
-        if top:
-            return top[0][0]  # strip off count
-        return None
-
-    @property
-    def windowed_counts(self):
-        counts = Counter(self.this_counter)
-        counts.update(self.last_counter)
+    def aggregated(self):
+        counts = Counter()
+        for counter in self.counters:
+            counts.update(counter)
         return counts
 
-    def incr(self, url, delta=1):
-        self.this_counter[url] += delta
+    @property
+    def this_counter(self):
+        return self.counters[-1]
+
+    def incr(self, key, delta=1):
+        self.this_counter[key] += delta
 
     def update(self, other):
         self.this_counter.update(other)
 
     def advance_window(self):
-        self.last_counter = self.this_counter
-        self.this_counter = Counter()
+        self.counters.pop(0)
+        self.counters.append(Counter())
 
 
-top_tweet = TopTweet()
+top_tweet = ChunkedCounter()
 
 
 def count_top_tweet(status_q):
@@ -116,7 +112,7 @@ def periodic_top_tweets(twitter_api, interval=TWEET_INTERVAL * 0.3, unique_inter
             used_tweets.pop(0)
             used_tweets.append(set())    
         all_used_tweets = reduce(operator.or_, used_tweets)
-        unique_counter = top_tweet.windowed_counts
+        unique_counter = top_tweet.aggregated
         for url in all_used_tweets:
             unique_counter[url] = 0
         most_common = unique_counter.most_common(5)
@@ -135,7 +131,7 @@ def periodic_top_tweets(twitter_api, interval=TWEET_INTERVAL * 0.3, unique_inter
 
 def aggregate_sampler_data(output_writer, buffer_q):
     for buffer_item in buffer_q:
-        counts = top_tweet.windowed_counts
+        counts = top_tweet.aggregated
         top_tweet_urls = [c[0] for c in counts.most_common(3)]
         top_tweet.advance_window()
         output_writer.put((buffer_item, top_tweet_urls))
