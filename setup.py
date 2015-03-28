@@ -14,7 +14,7 @@ package = "lolpersec"
 description = "LOL/second on twitter"
 url = "https://github.com/awentzonline/lolpersec"
 author = "Adam Wentz"
-author_email = "awentz@theonion.com"
+author_email = "adam@adamwentz.com"
 license = "MIT"
 requires = [
     "gtwittools",
